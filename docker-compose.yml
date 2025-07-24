@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./app
+    container_name: fastapi-backend
+    ports:
+      - "${BACKEND_PORT}:8000"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./ui
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
+    container_name: react-frontend
+    ports:
+      - "${FRONTEND_PORT}:80"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+    driver: bridge

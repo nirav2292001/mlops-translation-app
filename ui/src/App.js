@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
@@ -7,6 +7,14 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [sourceLang, setSourceLang] = useState('en');
   const [targetLang, setTargetLang] = useState('de');
+  const [apiUrl, setApiUrl] = useState('http://localhost:8000'); // fallback
+
+  // ⬇️ Load the API URL dynamically from env.js
+  useEffect(() => {
+    if (window.env && window.env.REACT_APP_API_URL) {
+      setApiUrl(window.env.REACT_APP_API_URL);
+    }
+  }, []);
 
   const handleTranslate = async () => {
     if (!text.trim()) {
@@ -15,7 +23,7 @@ function App() {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/translate', {
+      const response = await fetch(`${apiUrl}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
