@@ -61,7 +61,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>AI Translator NIRAV</h1>
+        <h1>AI Translator </h1>
         <div className="language-selectors">
           <select 
             value={sourceLang} 
