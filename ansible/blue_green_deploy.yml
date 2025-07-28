@@ -37,9 +37,9 @@
 
     - name: Remove old blue container
       community.docker.docker_container:
-        name: frontend-blue
+        name: mlops-translation-app_frontend-blue
         state: absent
         force_kill: true
 
     - name: Rename green container to blue
-      command: docker rename frontend-green frontend-blue
+      command: docker rename mlops-translation-app_frontend-green mlops-translation-app_frontend-blue
