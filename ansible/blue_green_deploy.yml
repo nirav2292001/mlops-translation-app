@@ -47,7 +47,7 @@
         state: absent
         force_kill: true
 
-    - name: Recreate blue frontend container using docker-compose
-      command: docker-compose -f {{ app_dir }}/docker-compose.yml up -d frontend-blue
+    - name: Recreate blue frontend container cleanly
+      command: docker-compose -f {{ app_dir }}/docker-compose.yml up -d --force-recreate --no-deps frontend-blue
       args:
         chdir: "{{ app_dir }}"
