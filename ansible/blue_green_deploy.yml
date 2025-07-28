@@ -1,5 +1,5 @@
 - name: Blue-Green Deployment for Frontend
-  hosts: frontend_servers
+  hosts: local
   become: yes
   vars_files:
     - vars.yml

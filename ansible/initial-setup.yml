@@ -1,5 +1,5 @@
 - name: Initial Setup for Full-Stack App
-  hosts: frontend_servers
+  hosts: local
   become: true
   vars_files:
     - vars.yml
@@ -35,11 +35,6 @@
         state: present
         update_cache: true
 
-    - name: Add user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
 
     - name: Clone the application repository
       ansible.builtin.git:
