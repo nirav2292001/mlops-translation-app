@@ -48,6 +48,6 @@
         force_kill: true
 
     - name: Recreate blue frontend container using docker-compose
-      command: docker-compose -f {{ app_dir }}/docker-compose.yml up -d react-frontend-blue
+      command: docker-compose -f {{ app_dir }}/docker-compose.yml up -d frontend-blue
       args:
         chdir: "{{ app_dir }}"
