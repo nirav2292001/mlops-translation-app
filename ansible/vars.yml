@@ -1,5 +1,4 @@
-blue_container: frontend-blue
-green_container: frontend-green
-nginx_conf_path: ../nginx.conf          # Relative to playbook
-docker_compose_file: ../docker-compose.yml
-
+git_repo: https://github.com/nirav2292001/mlops-translation-app.git
+app_dir: /opt/mlops-translation-app
+green_port: 8081  # Change if needed
+host_ip: "{{ ansible_default_ipv4.address }}"

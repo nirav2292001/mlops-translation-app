@@ -1,0 +1,68 @@
+- name: Initial Setup for Full-Stack App
+  hosts: frontend_servers
+  become: true
+  vars_files:
+    - vars.yml
+  tasks:
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install Docker and Docker Compose
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose
+        state: present
+        update_cache: true
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Clone the application repository
+      ansible.builtin.git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_dir }}"
+        version: main
+
+    - name: Get the host IP address
+      ansible.builtin.command: hostname -I
+      register: host_ip_raw
+
+    - name: Set IP address fact (use first IP only)
+      set_fact:
+        host_ip: "{{ host_ip_raw.stdout.split()[0] }}"
+
+    - name: Inject REACT_APP_API_URL with host IP into frontend .env
+      copy:
+        dest: "{{ app_dir }}/frontend/.env"
+        content: |
+          REACT_APP_API_URL=http://{{ host_ip }}:8000
+
+    - name: Start the full-stack app using docker-compose.yml
+      community.docker.docker_compose:
+        project_src: "{{ app_dir }}"
+        build: true
+        state: present

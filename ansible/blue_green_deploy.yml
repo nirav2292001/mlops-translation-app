@@ -1,0 +1,45 @@
+- name: Blue-Green Deployment for Frontend
+  hosts: frontend_servers
+  become: yes
+  vars_files:
+    - vars.yml
+  tasks:
+
+    - name: Pull latest code
+      ansible.builtin.git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_dir }}"
+        version: main
+
+    - name: Build and run green container
+      community.docker.docker_compose:
+        project_src: "{{ app_dir }}"
+        files:
+          - docker-compose-green.yml
+        build: true
+
+    - name: Wait for green container to start
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: "{{ green_port }}"
+        timeout: 30
+
+    - name: Smoke test green container
+      uri:
+        url: "http://{{ ansible_host }}:{{ green_port }}"
+        return_content: yes
+        status_code: 200
+      register: smoke_test_result
+
+    - name: Print test result
+      debug:
+        msg: "Smoke test on {{ inventory_hostname }} returned: {{ smoke_test_result.status }}"
+
+    - name: Remove old blue container
+      community.docker.docker_container:
+        name: frontend-blue
+        state: absent
+        force_kill: true
+
+    - name: Rename green container to blue
+      command: docker rename frontend-green frontend-blue
