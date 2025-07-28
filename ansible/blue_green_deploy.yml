@@ -41,5 +41,13 @@
         state: absent
         force_kill: true
 
-    - name: Rename green container to blue
-      command: docker rename react-frontend-green react-frontend-blue
+    - name: Remove new green container
+      community.docker.docker_container:
+        name: react-frontend-green
+        state: absent
+        force_kill: true
+
+    - name: Recreate blue frontend container using docker-compose
+      command: docker-compose -f {{ app_dir }}/docker-compose.yml up -d react-frontend-blue
+      args:
+        chdir: "{{ app_dir }}"
