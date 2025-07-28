@@ -1,0 +1,5 @@
+blue_container: frontend-blue
+green_container: frontend-green
+nginx_conf_path: ../nginx.conf          # Relative to playbook
+docker_compose_file: ../docker-compose.yml
+
