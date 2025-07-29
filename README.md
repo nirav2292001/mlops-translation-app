@@ -2,24 +2,6 @@
 
 A full-stack MLOps project demonstrating **CI/CD**, **blue-green deployment**, and **ML monitoring** with **Jenkins**, **Ansible**, **Docker**, **React**, **FastAPI**, and **MLflow**.
 
-## Project Structure
-mlops-translation-app/
-│
-├── backend/ # FastAPI backend (ML model + API)
-│ ├── main.py
-│ ├── translator.py
-│ ├── requirements.txt
-│ └── mlflow_logs/ # MLflow logs directory
-│
-├── frontend/ # React frontend (Translation UI)
-│
-├── ansible/ # Ansible playbooks for deployment
-│ ├── blue_green_deploy.yml
-│ └── inventory.ini
-│
-├── Jenkinsfile # Jenkins pipeline script
-└── nginx/ # NGINX reverse proxy config
-
 ## Features
 
 - **React frontend** with user-friendly interface
@@ -39,8 +21,9 @@ git clone https://github.com/nirav2292001/mlops-translation-app.git
 cd mlops-translation-app
 ```
 
-### 2. Run Locally via Docker Compose
 
+### 2. Run Locally via Docker Compose
+configure your details in .env file
 ```bash
 docker-compose up --build -d
 ```
@@ -108,5 +91,19 @@ mlflow ui --backend-store-uri ./mlflow_logs --host 0.0.0.0 --port 5000
 | MLOps    | MLflow, Blue-Green Deployment |
 | Infra    | NGINX, Docker Compose         |
 
-## Author
-Built with by Nirav Dhimmar
+## 💡 TL;DR — Why This Project Is Valuable
+
+| Concept         | Skill You Demonstrate                       |
+|-----------------|---------------------------------------------|
+| Docker Compose  | Multi-service orchestration                 |
+| FastAPI         | ML model API exposure                       |
+| React           | UI integration with backend                 |
+| Jenkins         | Automated CI/CD pipelines                   |
+| Ansible         | Infrastructure automation (IaC)             |
+| MLflow          | Model monitoring and experiment tracking    |
+| NGINX           | Production-grade reverse proxy & routing    |
+| Webhook         | Event-driven deployments                    |
+## 👤 Author
+
+Built with 💻 and ☕ by **Nirav Dhimmar**
+[GitHub](https://github.com/nirav2292001) | [LinkedIn](https://www.linkedin.com/in/nirav-dhimmar-b5395b216/)
