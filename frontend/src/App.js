@@ -8,12 +8,34 @@ function App() {
   const [sourceLang, setSourceLang] = useState('en');
   const [targetLang, setTargetLang] = useState('de');
   const [apiUrl, setApiUrl] = useState('http://localhost:8000'); // fallback
+  const [languages, setLanguages] = useState({
+    en: 'English',
+    de: 'German',
+    fr: 'French',
+    es: 'Spanish',
+    it: 'Italian',
+    pt: 'Portuguese',
+    ru: 'Russian',
+    zh: 'Chinese'
+  });
 
-  // ⬇️ Load the API URL dynamically from env.js
-  useEffect(() => {
-    if (window.env && window.env.REACT_APP_API_URL) {
-      setApiUrl(window.env.REACT_APP_API_URL);
+  // Fetch supported languages from backend
+  const fetchLanguages = async () => {
+    try {
+      // Use relative path for nginx proxy
+      const response = await fetch('/api/languages');
+      if (response.ok) {
+        const data = await response.json();
+        setLanguages(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch languages:', error);
     }
+  };
+
+  // Load supported languages on component mount
+  useEffect(() => {
+    fetchLanguages();
   }, []);
 
   const handleTranslate = async () => {
@@ -21,27 +43,31 @@ function App() {
       alert('Please enter text to translate');
       return;
     }
+    
     setLoading(true);
+    setTranslated('');
+    
     try {
-      const response = await fetch(`${apiUrl}/translate`, {
+      // Use relative path for nginx proxy
+      const response = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           text,
-          source_lang: sourceLang,
-          target_lang: targetLang 
+          target_lang: targetLang  // Only send target language, as source is always English for now
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Translation failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Translation failed');
       }
 
       const data = await response.json();
       setTranslated(data.translated_text);
     } catch (error) {
-      console.error(error);
-      setTranslated('Translation failed. Please try again.');
+      console.error('Translation error:', error);
+      setTranslated(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -63,27 +89,34 @@ function App() {
       <div className="header">
         <h1>AI TRANSLATOR test2  </h1>
         <div className="language-selectors">
-          <select 
-            value={sourceLang} 
-            onChange={(e) => setSourceLang(e.target.value)}
-            className="language-selector"
-          >
-            <option value="en">English</option>
-            <option value="de">German</option>
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-          </select>
-          <span>→</span>
-          <select 
-            value={targetLang} 
-            onChange={(e) => setTargetLang(e.target.value)}
-            className="language-selector"
-          >
-            <option value="de">German</option>
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-          </select>
+          <div className="language-selector-container">
+            <label>From:</label>
+            <select 
+              value={sourceLang} 
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="language-selector"
+              disabled={true}  // Currently only English is supported as source
+            >
+              <option value="en">English</option>
+            </select>
+          </div>
+          
+          <div className="language-selector-container">
+            <label>To:</label>
+            <select 
+              value={targetLang} 
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="language-selector"
+            >
+              {Object.entries(languages).map(([code, name]) => (
+                code !== 'en' && (
+                  <option key={code} value={code}>
+                    {name} ({code.toUpperCase()})
+                  </option>
+                )
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

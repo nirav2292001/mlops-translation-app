@@ -1,15 +1,29 @@
 version: '3.8'
 
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  mlflow_logs:
+
 services:
   mongodb:
     image: mongo:6.0
     container_name: mongodb
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27017}:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-translation_db}
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -19,18 +33,20 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: fastapi-backend
+    container_name: backend
     restart: always
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
+    expose:
+      - "8000"
     environment:
       - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_INITDB_DATABASE:-translation_db}?authSource=admin
       - PYTHONUNBUFFERED=1
+      - MLFLOW_DIR=/mlflow_logs
     volumes:
       - ./backend:/app
-      - ./backend/mlflow_logs:/mlflow_logs
+      - mlflow_logs:/mlflow_logs
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -39,13 +55,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
-    container_name: react-frontend
+        - REACT_APP_API_URL=/api  # Changed to use relative path for nginx proxy
+    container_name: frontend
     restart: always
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     environment:
-      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+      - REACT_APP_API_URL=/api  # Changed to use relative path for nginx proxy
     depends_on:
       - backend
     networks:
@@ -54,19 +70,31 @@ services:
   mlflow-ui:
     image: ghcr.io/mlflow/mlflow:v2.12.1
     container_name: mlflow-ui
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     command: mlflow ui --backend-store-uri /mlflow_logs --host 0.0.0.0 --port 5000
     volumes:
-      - ./backend/mlflow_logs:/mlflow_logs
+      - mlflow_logs:/mlflow_logs
     depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
       - backend
+      - mlflow-ui
     networks:
       - app-network
 
 volumes:
   mongodb_data:
-
-networks:
-  app-network:
-    driver: bridge
+  mlflow_logs:
