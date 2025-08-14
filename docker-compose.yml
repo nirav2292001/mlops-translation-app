@@ -94,7 +94,3 @@ services:
       - mlflow-ui
     networks:
       - app-network
-
-volumes:
-  mongodb_data:
-  mlflow_logs:
