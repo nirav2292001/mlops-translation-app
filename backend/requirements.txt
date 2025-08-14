@@ -4,5 +4,3 @@ transformers
 torch
 sentencepiece
 mlflow
-pymongo
-python-dotenv
