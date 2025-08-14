@@ -1,55 +1,71 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-translation_db}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: fastapi-backend
+    restart: always
     ports:
-      - "${BACKEND_PORT}:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_INITDB_DATABASE:-translation_db}?authSource=admin
+      - PYTHONUNBUFFERED=1
     volumes:
-      - ./backend/mlflow_logs:/mlflow_logs 
+      - ./backend:/app
+      - ./backend/mlflow_logs:/mlflow_logs
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+    container_name: react-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+    depends_on:
+      - backend
     networks:
       - app-network
 
   mlflow-ui:
     image: ghcr.io/mlflow/mlflow:v2.12.1
+    container_name: mlflow-ui
     ports:
       - "5000:5000"
     command: mlflow ui --backend-store-uri /mlflow_logs --host 0.0.0.0 --port 5000
     volumes:
       - ./backend/mlflow_logs:/mlflow_logs
-    networks:
-      - app-network
-
-  frontend-blue:
-    build:
-      context: ./frontend
-      args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
-    container_name: react-frontend-blue
-    expose:
-      - "80"
-    environment:
-      - REACT_APP_API_URL=${REACT_APP_API_URL}
-    networks:
-      - app-network
     depends_on:
       - backend
-
-
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - frontend-blue
     networks:
       - app-network
-      
+
+volumes:
+  mongodb_data:
 
 networks:
   app-network:

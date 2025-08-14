@@ -5,6 +5,9 @@ import time
 model_name = "Helsinki-NLP/opus-mt-en-de"
 
 # MLflow tracking settings
+import os
+# Create mlflow_logs directory if it doesn't exist
+os.makedirs("./mlflow_logs", exist_ok=True)
 mlflow.set_tracking_uri("file:./mlflow_logs")
 mlflow.set_experiment("translation_service")
 
